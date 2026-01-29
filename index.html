@@ -1,0 +1,1145 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="theme-color" content="#1a1a2e">
+    <title>Змейка - Классическая игра</title>
+    <style>
+        /* === СБРОС И БАЗОВЫЕ СТИЛИ === */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+            -webkit-touch-callout: none;
+        }
+
+        html, body {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            position: fixed;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Segoe UI', Arial, sans-serif;
+            color: #fff;
+            overscroll-behavior: none;
+        }
+
+        body {
+            -webkit-overflow-scrolling: touch;
+            overflow-scrolling: touch;
+            touch-action: manipulation;
+        }
+
+        /* === КОНТЕЙНЕР ИГРЫ === */
+        .game-container {
+            width: 100%;
+            height: 100vh;
+            height: -webkit-fill-available;
+            max-width: 600px;
+            margin: 0 auto;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* === ГЛАВНОЕ МЕНЮ === */
+        .main-menu {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            z-index: 1000;
+            transition: opacity 0.3s ease;
+        }
+
+        .menu-header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .game-title {
+            color: #4CAF50;
+            font-size: clamp(2.5rem, 8vw, 3.5rem);
+            text-shadow: 3px 3px 6px rgba(0, 0, 0, 0.5);
+            margin-bottom: 10px;
+            animation: snakeMove 3s infinite alternate;
+        }
+
+        @keyframes snakeMove {
+            0% { transform: scale(1); }
+            100% { transform: scale(1.05); }
+        }
+
+        .menu-subtitle {
+            color: #aaa;
+            font-size: clamp(1rem, 4vw, 1.2rem);
+        }
+
+        .menu-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            width: 100%;
+            max-width: 300px;
+        }
+
+        .menu-btn {
+            width: 100%;
+            height: 55px;
+            background: linear-gradient(145deg, rgba(76, 175, 80, 0.9), rgba(69, 160, 73, 0.9));
+            border: none;
+            border-radius: 15px;
+            color: white;
+            font-size: 1.1rem;
+            font-weight: bold;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            transition: all 0.2s ease;
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+        }
+
+        .menu-btn:active {
+            transform: scale(0.95);
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
+        }
+
+        .btn-icon {
+            font-size: 1.3em;
+        }
+
+        .btn-play {
+            background: linear-gradient(145deg, #4CAF50, #45a049);
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.03); }
+            100% { transform: scale(1); }
+        }
+
+        .btn-settings {
+            background: linear-gradient(145deg, #2196F3, #1976D2);
+        }
+
+        .btn-help {
+            background: linear-gradient(145deg, #FF9800, #F57C00);
+        }
+
+        .menu-footer {
+            position: absolute;
+            bottom: 20px;
+            text-align: center;
+            color: #666;
+            font-size: 0.9rem;
+        }
+
+        /* === ИГРОВОЙ ЭКРАН === */
+        .game-screen {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            padding: 10px;
+        }
+
+        .game-header {
+            text-align: center;
+            padding: 10px 0;
+            flex-shrink: 0;
+        }
+
+        .score-board {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 15px;
+            margin: 10px 0;
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+        }
+
+        .score-item {
+            text-align: center;
+        }
+
+        .score-label {
+            font-size: clamp(0.8rem, 3vw, 1rem);
+            color: #aaa;
+            margin-bottom: 5px;
+        }
+
+        .score-value {
+            font-size: clamp(1.2rem, 4vw, 1.8rem);
+            font-weight: bold;
+            color: #4CAF50;
+        }
+
+        /* ИГРОВОЕ ПОЛЕ */
+        .game-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            min-height: 0;
+        }
+
+        .canvas-wrapper {
+            position: relative;
+            width: 100%;
+            max-width: min(400px, 90vh);
+            border: 3px solid #4CAF50;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 0 30px rgba(76, 175, 80, 0.3);
+            background: #0f3460;
+            touch-action: none;
+        }
+
+        #gameCanvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
+
+        /* ПАНЕЛЬ УПРАВЛЕНИЯ ДЛЯ МОБИЛЬНЫХ */
+        .mobile-controls {
+            margin-top: 20px;
+            width: 100%;
+            max-width: 300px;
+            display: none;
+            grid-template-areas:
+                ". up ."
+                "left . right"
+                ". down .";
+            gap: 15px;
+            padding: 20px;
+        }
+
+        .control-btn {
+            width: 70px;
+            height: 70px;
+            background: rgba(76, 175, 80, 0.3);
+            border: 2px solid #4CAF50;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            color: white;
+            cursor: pointer;
+            user-select: none;
+            transition: all 0.1s ease;
+            -webkit-user-select: none;
+        }
+
+        .control-btn:active {
+            background: rgba(76, 175, 80, 0.6);
+            transform: scale(0.95);
+        }
+
+        .control-up { grid-area: up; }
+        .control-left { grid-area: left; }
+        .control-right { grid-area: right; }
+        .control-down { grid-area: down; }
+
+        /* КНОПКИ ДЕЙСТВИЙ */
+        .action-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin: 15px 0;
+            flex-shrink: 0;
+        }
+
+        .btn {
+            min-width: 120px;
+            height: 50px;
+            background: linear-gradient(145deg, #4CAF50, #45a049);
+            border: none;
+            border-radius: 25px;
+            color: white;
+            font-size: clamp(0.9rem, 3vw, 1rem);
+            font-weight: bold;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 0 20px;
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .btn:active {
+            transform: scale(0.95);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        .btn-pause {
+            background: linear-gradient(145deg, #FF9800, #F57C00);
+        }
+
+        .btn-menu {
+            background: linear-gradient(145deg, #9C27B0, #7B1FA2);
+        }
+
+        /* ЭКРАН ЗАВЕРШЕНИЯ ИГРЫ */
+        .game-over {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.95);
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+            border-radius: 15px;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .game-over h2 {
+            color: #ff4444;
+            font-size: clamp(2rem, 6vw, 2.8rem);
+            margin-bottom: 20px;
+            text-shadow: 0 0 15px rgba(255, 68, 68, 0.5);
+        }
+
+        .game-over-stats {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 20px;
+            margin: 20px 0;
+            width: 80%;
+            max-width: 300px;
+        }
+
+        .game-over p {
+            font-size: clamp(1.1rem, 4vw, 1.3rem);
+            margin: 10px 0;
+            color: #ddd;
+        }
+
+        /* СВАЙП-ПОДСКАЗКА */
+        .swipe-info {
+            text-align: center;
+            padding: 10px;
+            color: #aaa;
+            font-size: 0.9rem;
+            display: none;
+        }
+
+        /* === АДАПТИВНОСТЬ === */
+        @media (max-width: 768px) {
+            .mobile-controls {
+                display: grid;
+            }
+
+            .swipe-info {
+                display: block;
+            }
+
+            .control-btn {
+                width: 80px;
+                height: 80px;
+                font-size: 28px;
+            }
+
+            .menu-buttons {
+                max-width: 280px;
+            }
+
+            .menu-btn {
+                height: 60px;
+                font-size: 1.2rem;
+            }
+        }
+
+        @media (max-height: 700px) {
+            .game-title {
+                font-size: 2rem;
+                margin-bottom: 5px;
+            }
+
+            .menu-header {
+                margin-bottom: 20px;
+            }
+
+            .menu-buttons {
+                gap: 10px;
+            }
+
+            .menu-btn {
+                height: 50px;
+                font-size: 1rem;
+            }
+
+            .score-board {
+                padding: 10px;
+                margin: 5px 0;
+            }
+
+            .action-buttons {
+                margin: 10px 0;
+            }
+        }
+
+        @media (orientation: landscape) and (max-height: 500px) {
+            .main-menu {
+                flex-direction: row;
+                justify-content: space-around;
+                padding: 10px;
+            }
+
+            .menu-header {
+                flex: 1;
+                margin-bottom: 0;
+                margin-right: 20px;
+            }
+
+            .menu-buttons {
+                flex: 1;
+                max-width: 250px;
+            }
+
+            .menu-footer {
+                display: none;
+            }
+
+            .game-screen {
+                flex-direction: row;
+                padding: 5px;
+            }
+
+            .game-header {
+                flex: 0 0 180px;
+                padding-right: 10px;
+                display: flex;
+                flex-direction: column;
+                justify-content: center;
+            }
+
+            .game-area {
+                flex: 1;
+            }
+
+            .mobile-controls {
+                display: none;
+            }
+
+            .swipe-info {
+                display: none;
+            }
+        }
+
+        /* Для очень маленьких экранов */
+        @media (max-width: 350px) {
+            .control-btn {
+                width: 60px;
+                height: 60px;
+                font-size: 22px;
+            }
+
+            .btn {
+                min-width: 100px;
+                height: 45px;
+                font-size: 0.9rem;
+                padding: 0 15px;
+            }
+
+            .menu-btn {
+                height: 50px;
+                font-size: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <!-- ГЛАВНОЕ МЕНЮ -->
+        <div class="main-menu" id="mainMenu">
+            <div class="menu-header">
+                <h1 class="game-title">🐍 ЗМЕЙКА</h1>
+                <p class="menu-subtitle">Классическая игра на все времена</p>
+            </div>
+            
+            <div class="menu-buttons">
+                <button class="menu-btn btn-play" id="playBtn">
+                    <span class="btn-icon">▶️</span>
+                    <span>Начать игру</span>
+                </button>
+            </div>
+            
+            <div class="menu-footer">
+                © 2024 Змейка | Лучший рекорд: <span id="menuHighScore">0</span>
+            </div>
+        </div>
+
+        <!-- ИГРОВОЙ ЭКРАН -->
+        <div class="game-screen" id="gameScreen" style="display: none;">
+            <div class="game-header">
+                <div class="score-board">
+                    <div class="score-item">
+                        <div class="score-label">Счет</div>
+                        <div class="score-value" id="score">0</div>
+                    </div>
+                    <div class="score-item">
+                        <div class="score-label">Длина</div>
+                        <div class="score-value" id="length">3</div>
+                    </div>
+                    <div class="score-item">
+                        <div class="score-label">Рекорд</div>
+                        <div class="score-value" id="highScore">0</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="game-area">
+                <div class="canvas-wrapper">
+                    <canvas id="gameCanvas"></canvas>
+                    
+                    <div class="game-over" id="gameOver">
+                        <h2>ИГРА ОКОНЧЕНА!</h2>
+                        <div class="game-over-stats">
+                            <p>Ваш счет: <span id="finalScore">0</span></p>
+                            <p>Длина змейки: <span id="finalLength">3</span></p>
+                            <p>Лучший результат: <span id="finalHighScore">0</span></p>
+                        </div>
+                        <div class="action-buttons">
+                            <button class="btn" id="restartBtn">
+                                <span class="btn-icon">🔄</span>
+                                <span>Играть снова</span>
+                            </button>
+                            <button class="btn btn-menu" id="backToMenuBtn">
+                                <span class="btn-icon">🏠</span>
+                                <span>В меню</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="mobile-controls">
+                    <button class="control-btn control-up" id="btnUp">↑</button>
+                    <button class="control-btn control-left" id="btnLeft">←</button>
+                    <button class="control-btn control-right" id="btnRight">→</button>
+                    <button class="control-btn control-down" id="btnDown">↓</button>
+                </div>
+                
+                <div class="swipe-info">
+                    🔸 Или используйте свайпы по экрану
+                </div>
+                
+                <div class="action-buttons">
+                    <button class="btn btn-pause" id="pauseBtn">
+                        <span class="btn-icon">⏸️</span>
+                        <span id="pauseBtnText">Пауза</span>
+                    </button>
+                    <button class="btn btn-menu" id="gameMenuBtn">
+                        <span class="btn-icon">🏠</span>
+                        <span>Меню</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // === ИНИЦИАЛИЗАЦИЯ И ПЕРЕМЕННЫЕ ===
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        
+        // Состояния экранов
+        const SCREENS = {
+            MENU: 'menu',
+            GAME: 'game'
+        };
+        let currentScreen = SCREENS.MENU;
+        
+        // Настройки игры
+        let gameSettings = {
+            speed: 150,
+            sound: true,
+            vibration: true,
+            showGrid: false
+        };
+        
+        // Константы игры
+        const GRID_SIZE = 20;
+        let TILE_SIZE = 0;
+        const INITIAL_SPEED = 150;
+        
+        // Игровые переменные
+        let snake = [];
+        let food = {};
+        let direction = 'right';
+        let nextDirection = 'right';
+        let gameSpeed = INITIAL_SPEED;
+        let score = 0;
+        let highScore = localStorage.getItem('snakeHighScore') || 0;
+        let gameRunning = false;
+        let gameLoop;
+        let isPaused = false;
+        let touchStartX = 0;
+        let touchStartY = 0;
+        
+        // DOM элементы
+        const mainMenu = document.getElementById('mainMenu');
+        const gameScreen = document.getElementById('gameScreen');
+        const scoreElement = document.getElementById('score');
+        const lengthElement = document.getElementById('length');
+        const highScoreElement = document.getElementById('highScore');
+        const menuHighScoreElement = document.getElementById('menuHighScore');
+        
+        // Кнопки меню
+        const playBtn = document.getElementById('playBtn');
+        
+        // Кнопки игры
+        const pauseBtn = document.getElementById('pauseBtn');
+        const pauseBtnText = document.getElementById('pauseBtnText');
+        const restartBtn = document.getElementById('restartBtn');
+        const gameMenuBtn = document.getElementById('gameMenuBtn');
+        const backToMenuBtn = document.getElementById('backToMenuBtn');
+        
+        // Кнопки управления для мобильных
+        const btnUp = document.getElementById('btnUp');
+        const btnLeft = document.getElementById('btnLeft');
+        const btnRight = document.getElementById('btnRight');
+        const btnDown = document.getElementById('btnDown');
+        
+        // Экран завершения
+        const gameOverScreen = document.getElementById('gameOver');
+        const finalScoreElement = document.getElementById('finalScore');
+        const finalLengthElement = document.getElementById('finalLength');
+        const finalHighScoreElement = document.getElementById('finalHighScore');
+        
+        // === УПРАВЛЕНИЕ ЭКРАНАМИ ===
+        function showScreen(screen) {
+            // Скрыть все экраны
+            mainMenu.style.display = 'none';
+            gameScreen.style.display = 'none';
+            
+            // Показать нужный экран
+            switch(screen) {
+                case SCREENS.MENU:
+                    mainMenu.style.display = 'flex';
+                    updateMenuHighScore();
+                    break;
+                case SCREENS.GAME:
+                    gameScreen.style.display = 'flex';
+                    if (!gameRunning) {
+                        initGame();
+                        startGame();
+                    }
+                    break;
+            }
+            
+            currentScreen = screen;
+        }
+        
+        function updateMenuHighScore() {
+            menuHighScoreElement.textContent = highScore;
+        }
+        
+        // === ПРЕДОТВРАЩЕНИЕ СКРОЛЛА ===
+        document.addEventListener('touchmove', function(e) {
+            if (currentScreen === SCREENS.GAME) {
+                e.preventDefault();
+            }
+        }, { passive: false });
+        
+        // === НАСТРОЙКА КАНВАСА ===
+        function setupCanvas() {
+            const container = document.querySelector('.canvas-wrapper');
+            const size = Math.min(container.clientWidth, container.clientHeight);
+            canvas.width = size;
+            canvas.height = size;
+            TILE_SIZE = canvas.width / GRID_SIZE;
+        }
+        
+        // === ФУНКЦИИ ИГРЫ ===
+        function initGame() {
+            setupCanvas();
+            
+            // Создаем начальную змейку
+            snake = [
+                {x: 5, y: 10},
+                {x: 4, y: 10},
+                {x: 3, y: 10}
+            ];
+            
+            // Сброс направления
+            direction = 'right';
+            nextDirection = 'right';
+            
+            // Генерация еды
+            generateFood();
+            
+            // Сброс скорости и счета
+            gameSpeed = gameSettings.speed;
+            score = 0;
+            
+            // Обновление отображения
+            updateScore();
+            gameOverScreen.style.display = 'none';
+            highScoreElement.textContent = highScore;
+            
+            // Отрисовка начального состояния
+            drawGame();
+        }
+        
+        function generateFood() {
+            let foodOnSnake;
+            
+            do {
+                foodOnSnake = false;
+                food = {
+                    x: Math.floor(Math.random() * GRID_SIZE),
+                    y: Math.floor(Math.random() * GRID_SIZE)
+                };
+                
+                // Проверка, не на змейке ли еда
+                for (let segment of snake) {
+                    if (segment.x === food.x && segment.y === food.y) {
+                        foodOnSnake = true;
+                        break;
+                    }
+                }
+            } while (foodOnSnake);
+        }
+        
+        function updateScore() {
+            scoreElement.textContent = score;
+            lengthElement.textContent = snake.length;
+            
+            if (score > highScore) {
+                highScore = score;
+                highScoreElement.textContent = highScore;
+                localStorage.setItem('snakeHighScore', highScore);
+                updateMenuHighScore();
+            }
+        }
+        
+        function gameUpdate() {
+            if (isPaused) return;
+            
+            direction = nextDirection;
+            const head = {...snake[0]};
+            
+            // Движение головы
+            switch (direction) {
+                case 'up': head.y--; break;
+                case 'down': head.y++; break;
+                case 'left': head.x--; break;
+                case 'right': head.x++; break;
+            }
+            
+            // Проверка столкновения со стенами
+            if (head.x < 0 || head.x >= GRID_SIZE || head.y < 0 || head.y >= GRID_SIZE) {
+                gameOver();
+                return;
+            }
+            
+            // Проверка столкновения с собой
+            for (let segment of snake) {
+                if (head.x === segment.x && head.y === segment.y) {
+                    gameOver();
+                    return;
+                }
+            }
+            
+            // Добавление новой головы
+            snake.unshift(head);
+            
+            // Проверка, съедена ли еда
+            if (head.x === food.x && head.y === food.y) {
+                score += 10;
+                
+                // Виброотклик на мобильных
+                if (gameSettings.vibration && 'vibrate' in navigator) {
+                    navigator.vibrate(50);
+                }
+                
+                generateFood();
+                updateScore();
+            } else {
+                snake.pop();
+            }
+            
+            drawGame();
+        }
+        
+        function drawGame() {
+            // Фон
+            ctx.fillStyle = '#0f3460';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // Отрисовка змейки
+            snake.forEach((segment, index) => {
+                // Градиент для змейки
+                const gradient = ctx.createLinearGradient(
+                    segment.x * TILE_SIZE,
+                    segment.y * TILE_SIZE,
+                    segment.x * TILE_SIZE + TILE_SIZE,
+                    segment.y * TILE_SIZE + TILE_SIZE
+                );
+                
+                if (index === 0) {
+                    gradient.addColorStop(0, '#4CAF50');
+                    gradient.addColorStop(1, '#45a049');
+                } else {
+                    gradient.addColorStop(0, '#2E7D32');
+                    gradient.addColorStop(1, '#1B5E20');
+                }
+                
+                ctx.fillStyle = gradient;
+                ctx.fillRect(segment.x * TILE_SIZE + 1, segment.y * TILE_SIZE + 1, TILE_SIZE - 2, TILE_SIZE - 2);
+                
+                // Глаза для головы
+                if (index === 0) {
+                    ctx.fillStyle = '#000';
+                    
+                    let eye1X, eye1Y, eye2X, eye2Y;
+                    
+                    switch (direction) {
+                        case 'up':
+                            eye1X = segment.x * TILE_SIZE + TILE_SIZE * 0.3;
+                            eye1Y = segment.y * TILE_SIZE + TILE_SIZE * 0.3;
+                            eye2X = segment.x * TILE_SIZE + TILE_SIZE * 0.7;
+                            eye2Y = segment.y * TILE_SIZE + TILE_SIZE * 0.3;
+                            break;
+                        case 'down':
+                            eye1X = segment.x * TILE_SIZE + TILE_SIZE * 0.3;
+                            eye1Y = segment.y * TILE_SIZE + TILE_SIZE * 0.7;
+                            eye2X = segment.x * TILE_SIZE + TILE_SIZE * 0.7;
+                            eye2Y = segment.y * TILE_SIZE + TILE_SIZE * 0.7;
+                            break;
+                        case 'left':
+                            eye1X = segment.x * TILE_SIZE + TILE_SIZE * 0.3;
+                            eye1Y = segment.y * TILE_SIZE + TILE_SIZE * 0.3;
+                            eye2X = segment.x * TILE_SIZE + TILE_SIZE * 0.3;
+                            eye2Y = segment.y * TILE_SIZE + TILE_SIZE * 0.7;
+                            break;
+                        case 'right':
+                            eye1X = segment.x * TILE_SIZE + TILE_SIZE * 0.7;
+                            eye1Y = segment.y * TILE_SIZE + TILE_SIZE * 0.3;
+                            eye2X = segment.x * TILE_SIZE + TILE_SIZE * 0.7;
+                            eye2Y = segment.y * TILE_SIZE + TILE_SIZE * 0.7;
+                            break;
+                    }
+                    
+                    ctx.beginPath();
+                    ctx.arc(eye1X, eye1Y, TILE_SIZE * 0.1, 0, Math.PI * 2);
+                    ctx.fill();
+                    
+                    ctx.beginPath();
+                    ctx.arc(eye2X, eye2Y, TILE_SIZE * 0.1, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+            });
+            
+            // Отрисовка еды
+            const foodGradient = ctx.createRadialGradient(
+                food.x * TILE_SIZE + TILE_SIZE / 2,
+                food.y * TILE_SIZE + TILE_SIZE / 2,
+                0,
+                food.x * TILE_SIZE + TILE_SIZE / 2,
+                food.y * TILE_SIZE + TILE_SIZE / 2,
+                TILE_SIZE / 2
+            );
+            
+            foodGradient.addColorStop(0, '#FF5722');
+            foodGradient.addColorStop(1, '#D84315');
+            
+            ctx.fillStyle = foodGradient;
+            ctx.beginPath();
+            ctx.arc(
+                food.x * TILE_SIZE + TILE_SIZE / 2,
+                food.y * TILE_SIZE + TILE_SIZE / 2,
+                TILE_SIZE / 2 - 2,
+                0,
+                Math.PI * 2
+            );
+            ctx.fill();
+            
+            // Блик на еде
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
+            ctx.beginPath();
+            ctx.arc(
+                food.x * TILE_SIZE + TILE_SIZE / 2 - TILE_SIZE * 0.15,
+                food.y * TILE_SIZE + TILE_SIZE / 2 - TILE_SIZE * 0.15,
+                TILE_SIZE * 0.1,
+                0,
+                Math.PI * 2
+            );
+            ctx.fill();
+        }
+        
+        function startGame() {
+            gameRunning = true;
+            isPaused = false;
+            pauseBtnText.textContent = 'Пауза';
+            clearInterval(gameLoop);
+            gameLoop = setInterval(gameUpdate, gameSpeed);
+        }
+        
+        function gameOver() {
+            gameRunning = false;
+            clearInterval(gameLoop);
+            
+            finalScoreElement.textContent = score;
+            finalLengthElement.textContent = snake.length;
+            finalHighScoreElement.textContent = highScore;
+            
+            gameOverScreen.style.display = 'flex';
+            
+            // Виброотклик при поражении
+            if (gameSettings.vibration && 'vibrate' in navigator) {
+                navigator.vibrate([100, 50, 100]);
+            }
+        }
+        
+        function togglePause() {
+            if (!gameRunning) return;
+            
+            isPaused = !isPaused;
+            pauseBtnText.textContent = isPaused ? 'Продолжить' : 'Пауза';
+            
+            if (isPaused) {
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.85)';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                
+                ctx.fillStyle = '#FF9800';
+                ctx.font = `bold ${canvas.width / 10}px Arial`;
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText('ПАУЗА', canvas.width / 2, canvas.height / 2 - 30);
+                
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+                ctx.font = `${canvas.width / 20}px Arial`;
+                ctx.fillText('Нажмите кнопку', canvas.width / 2, canvas.height / 2 + 30);
+                ctx.fillText('чтобы продолжить', canvas.width / 2, canvas.height / 2 + 60);
+            } else {
+                drawGame();
+            }
+        }
+        
+        // === УПРАВЛЕНИЕ ДЛЯ МОБИЛЬНЫХ ===
+        function handleTouchStart(e) {
+            if (!gameRunning || isPaused || currentScreen !== SCREENS.GAME) return;
+            
+            const touch = e.touches[0];
+            touchStartX = touch.clientX;
+            touchStartY = touch.clientY;
+            
+            e.preventDefault();
+        }
+        
+        function handleTouchEnd(e) {
+            if (!gameRunning || isPaused || !touchStartX || !touchStartY || currentScreen !== SCREENS.GAME) return;
+            
+            const touch = e.changedTouches[0];
+            const deltaX = touch.clientX - touchStartX;
+            const deltaY = touch.clientY - touchStartY;
+            const minSwipeDistance = 30;
+            
+            // Сброс начальных координат
+            touchStartX = 0;
+            touchStartY = 0;
+            
+            // Проверка дистанции свайпа
+            if (Math.abs(deltaX) < minSwipeDistance && Math.abs(deltaY) < minSwipeDistance) {
+                return;
+            }
+            
+            // Определение направления свайпа
+            if (Math.abs(deltaX) > Math.abs(deltaY)) {
+                // Горизонтальный свайп
+                if (deltaX > 0 && direction !== 'left') {
+                    nextDirection = 'right';
+                } else if (deltaX < 0 && direction !== 'right') {
+                    nextDirection = 'left';
+                }
+            } else {
+                // Вертикальный свайп
+                if (deltaY > 0 && direction !== 'up') {
+                    nextDirection = 'down';
+                } else if (deltaY < 0 && direction !== 'down') {
+                    nextDirection = 'up';
+                }
+            }
+            
+            e.preventDefault();
+        }
+        
+        // Нажатия на кнопки управления
+        [btnUp, btnLeft, btnRight, btnDown].forEach(btn => {
+            btn.addEventListener('touchstart', (e) => {
+                if (!gameRunning || isPaused) return;
+                
+                switch(btn.id) {
+                    case 'btnUp':
+                        if (direction !== 'down') nextDirection = 'up';
+                        break;
+                    case 'btnLeft':
+                        if (direction !== 'right') nextDirection = 'left';
+                        break;
+                    case 'btnRight':
+                        if (direction !== 'left') nextDirection = 'right';
+                        break;
+                    case 'btnDown':
+                        if (direction !== 'up') nextDirection = 'down';
+                        break;
+                }
+                
+                // Визуальная обратная связь
+                btn.style.transform = 'scale(0.95)';
+                setTimeout(() => {
+                    btn.style.transform = 'scale(1)';
+                }, 100);
+                
+                e.preventDefault();
+            });
+        });
+        
+        // Управление с клавиатуры
+        document.addEventListener('keydown', (e) => {
+            if (currentScreen !== SCREENS.GAME || !gameRunning) return;
+            
+            switch (e.key) {
+                case 'ArrowUp':
+                case 'w':
+                case 'W':
+                    if (direction !== 'down') nextDirection = 'up';
+                    break;
+                case 'ArrowDown':
+                case 's':
+                case 'S':
+                    if (direction !== 'up') nextDirection = 'down';
+                    break;
+                case 'ArrowLeft':
+                case 'a':
+                case 'A':
+                    if (direction !== 'right') nextDirection = 'left';
+                    break;
+                case 'ArrowRight':
+                case 'd':
+                case 'D':
+                    if (direction !== 'left') nextDirection = 'right';
+                    break;
+                case ' ':
+                case 'Spacebar':
+                    togglePause();
+                    break;
+                case 'Escape':
+                    if (gameRunning) togglePause();
+                    break;
+            }
+            
+            // Предотвращение прокрутки страницы
+            if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', ' ', 'Spacebar'].includes(e.key)) {
+                e.preventDefault();
+            }
+        });
+        
+        // === ОБРАБОТЧИКИ КНОПОК ===
+        // Меню
+        playBtn.addEventListener('click', () => {
+            showScreen(SCREENS.GAME);
+        });
+        
+        // Игра
+        pauseBtn.addEventListener('click', togglePause);
+        
+        restartBtn.addEventListener('click', () => {
+            initGame();
+            startGame();
+        });
+        
+        gameMenuBtn.addEventListener('click', () => {
+            showScreen(SCREENS.MENU);
+            gameRunning = false;
+            clearInterval(gameLoop);
+        });
+        
+        backToMenuBtn.addEventListener('click', () => {
+            showScreen(SCREENS.MENU);
+            gameRunning = false;
+            clearInterval(gameLoop);
+        });
+        
+        // === ИНИЦИАЛИЗАЦИЯ ПРИ ЗАГРУЗКЕ ===
+        window.addEventListener('load', () => {
+            // Загрузка рекорда
+            highScore = localStorage.getItem('snakeHighScore') || 0;
+            updateMenuHighScore();
+            
+            // Показать меню
+            showScreen(SCREENS.MENU);
+            
+            // Адаптация под мобильные устройства
+            if ('ontouchstart' in window) {
+                document.body.classList.add('touch-device');
+            }
+            
+            console.log('Игра загружена. Готов к запуску!');
+        });
+        
+        // Обработка изменения размера окна
+        window.addEventListener('resize', () => {
+            setupCanvas();
+            if (currentScreen === SCREENS.GAME && gameRunning && !isPaused) {
+                drawGame();
+            }
+        });
+        
+        window.addEventListener('orientationchange', () => {
+            setTimeout(() => {
+                setupCanvas();
+                if (currentScreen === SCREENS.GAME && gameRunning && !isPaused) {
+                    drawGame();
+                }
+            }, 100);
+        });
+        
+        // Добавление обработчиков для свайпов
+        canvas.addEventListener('touchstart', handleTouchStart, { passive: false });
+        canvas.addEventListener('touchend', handleTouchEnd, { passive: false });
+        
+        // Предотвращение скролла страницы при игре
+        document.addEventListener('touchmove', (e) => {
+            if (currentScreen === SCREENS.GAME) {
+                e.preventDefault();
+            }
+        }, { passive: false });
+    </script>
+</body>
+</html>
